@@ -1,0 +1,229 @@
+#!/bin/bash
+#YAD-Yet Another Dialog 
+
+function DisplayDateAndTime(){
+    # Display the current date and time
+    current_date=$(date +"%A, %d %B %Y")
+    time=$(date +"%H:%M:%S, %l %p")
+    day=$(date +"%j")
+
+    # Use yad to display a dialog box with the current date and time
+    (yad --title="Current Date & Time" --text="The current Date is: $current_date.\nNow it is currently $time. \nDay $day of the year." --button="OK:0" --width=300 --height=100 --left)
+}
+#DisplayDateAndTime
+
+function AddNotes(){
+
+    # Display form to add note
+    form=$(yad --title="Add Note" --text="Please enter details:" --form --date-format="%-d %B %Y" --separator="," \
+    --field="Date":DT "$(date +%-d %B %Y)" --field="Note":TXT "" "")
+
+    # Extract fields from the form
+    date=$(echo "$form" | cut -d, -f1)
+    note=$(echo "$form" | cut -d, -f2)    
+    
+    # Set filename and check if it exists
+    filename="($date)NOTE.txt"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+ 
+    # Append note to the file
+    echo "Date: $date" >> "$filename"
+    echo "Note: $note" >> "$filename"
+    
+    # Show confirmation message
+    (yad --title="INFORMATION: Note Added" --text="Details saved to file: $filename" --button="OK:0" --width=300 --height=100)
+    
+    # Display file contents for editing
+    (yad --title="Edit Note File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+#AddNotes
+
+function AddEvents(){
+	
+    event="Appointment,Doctor's Appointment,Meeting,Other Event"
+    start="00:00,01:00,02:00,03:00,04:00,05:00,06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,15:00,16:00,17:00,18:00,19:00,20:00,21:00,22:00,23:00"
+    finish="00:00,01:00,02:00,03:00,04:00,05:00,06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,15:00,16:00,17:00,18:00,19:00,20:00,21:00,22:00,23:00"
+
+    form=$(yad --title="Add Meeting"--text="Please enter appointment details:" --form --date-format="%-d %B %Y" --separator="," --item-separator="," --field="Choose event":CBE\
+    --field="Date":DT --field="Start Time":CBE --field="End Time":CBE --field="Additonal Notes:":TXT "$event" "" "$start" "$finish" "")
+	
+	
+    # Extract fields from the form
+    meeting=$(echo "$form" | cut -d, -f1)
+    date=$(echo "$form" | cut -d, -f2)
+    start_time=$(echo "$form" | cut -d, -f3)
+    end_time=$(echo "$form" | cut -d, -f4)
+    note=$(echo "$form" | cut -d, -f5)
+    	
+    # Create file
+    filename="($date)$meeting.txt"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+    
+    # Save appointment details to the file
+    echo "Event:"$meeting >>"$filename"
+    echo "Date: $date" >>"$filename"
+    echo "$meeting starts at: $start_time" >>"$filename"
+    echo "$meeting end at: $end_time">>"$filename"
+    echo "Note: $note" >>"$filename"
+    	
+    # Show confirmation message
+    (yad --title="INFORMATION: Event Added" --text="Details saved to file: $filename " --button="OK:0" --width=300 --height=500)
+    
+    # Display file contents for editing
+    (yad --title="Edit Event File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+#AddEvents
+
+function Agenda(){
+
+    date=$(yad --calendar --date-format="%-d %B %Y" --title="Calendar" --text="Select date" --borders=10)
+
+    # Create file
+    filename="($date)To_do_list.txt"
+    touch "$filename"
+
+    #Display a dialog box to get the user's input
+    task=$(yad --title="Add task to complete on today's agenda" --text="Enter the tasks you want to do, separated by commas:" --entry)
+
+    #Split the input into an array of tasks
+    IFS=',' read -ra tasks <<< "$task"  #read -a array reads and splits the text from standard input into the variable array. The splitting happens on the value of IFS which is set to comma for the duration of this operation.
+
+    #Write each task to the file
+    for t in "${tasks[@]}"
+    do
+        echo "$t" >> "$filename"
+    done
+
+    # Display the to-do list using yad checklist
+    checklist=()
+    while read line; do
+        checklist+=(FALSE "$line")
+    done < "$filename"
+
+    (yad --title="To Do List" --height=300 --list --checklist --column=Do/Done --column=Tasks "${checklist[@]}")
+}
+
+#Agenda
+
+function AddOccasions(){
+    occasion="Anniverssary,Birthday,Engagement,Marriage,Public Holiday,Vacation, Religious Ceremony,Other Occasion"
+
+    form=$(yad --title="Add Occasion"--text="Please enter occasion details:" --form --date-format="%-d %B %Y" --separator="," --item-separator="," --field="Date":DT  \
+    --field="Choose occasion":CBE --field="Name":TXT --field="Additonal Notes:":TXT "" "$occasion" "" "")
+	
+	
+    # Extract fields from the form
+    date=$(echo "$form" | cut -d, -f1)
+    event=$(echo "$form" | cut -d, -f2)
+    name=$(echo "$form" | cut -d, -f3)
+    note=$(echo "$form" | cut -d, -f4)
+    	
+    # Create file
+    filename="($date)$event.txt"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+    
+    # Save appointment details to the file
+    echo "Date:"$date >>"$filename"
+    echo "Occasion: $event" >>"$filename"
+    echo "$event: $name" >>"$filename"
+    echo "Note: $note" >>"$filename"
+    	
+    # Show confirmation message
+    (yad --title="INFORMATION: Occasion Added" --text="Details saved to file: $filename " --button="OK:0" --width=300 --height=500)
+    
+    # Display file contents for editing
+    (yad --title="Edit Occasion File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+#AddOccasions
+
+function ShowCalendar(){
+    # Show calendar dialog box
+    date=$(yad --calendar --date-format="%-d %B %Y" --title="Select a Date")
+
+    # Find all files with today's date in their name and group them together
+    files=$(find . -type f -name "*($date)*")
+
+    # If no files found, display message
+    if [ -z "$files" ]; then
+    	(yad --title="INFORMATION: No Files Found" --text="No files found for $date" --button="OK:0" --width=300 --height=100)
+	else
+    	   # Display all files found
+           (yad --title="File Contents for $date" --width=800 --height=600 --separator='\n' --text="$files")
+	fi
+}
+#ShowCalendar
+
+function DeleteFiles() {
+    dir=$1 #sets the dir variable to the first argument passed to the function
+
+    if [ -z "$dir" ]; then  #checks whether the dir variable is empty
+        dir="."  #sets dir to the current directory
+    fi
+
+    file=$(yad --title "Select a file to delete" --width=500 --height=500 --file --filename="$dir/*" --multiple --separator=" ")
+
+    if [ -n "$file" ]; then  #This line checks if the variable $file is not empty. The -n option is used to check if the string is non-empty. If $file is not empty, then the commands within the if block are executed.
+    
+        (yad --title "Confirm Delete" --text "Are you sure you want to delete the selected file(s)?" --button=gtk-yes:0 --button=gtk-no:1)
+
+        if [ $? -eq 0 ]; then  #if yes then proceed
+            for f in $file; do  #"$f" is the name of the current file being processed in the loop
+                sudo rm -i "$f" #rm command allow files to be deleted. -i command prompt the user for confirmation before deleting each file.
+                if [ $? -eq 0 ]; then
+                    (yad --title "Success" --info --text "File '$f' deleted successfully")
+                else
+                    (yad --title "Error" --error --text "Error while deleting file '$f'")
+                fi
+            done
+        fi
+    fi
+}
+#DeleteFiles
+
+function ShowMenu() {
+
+while true; do
+    option=$(yad --title "Menu" \
+    --width=600 --height=400 \
+    --form \
+    --field="Display current date and time":BTN "DisplayDateAndTime":1 \
+    --field="Add Note":BTN "AddNotes":2 \
+    --field="Create a To-do list":BTN "Agenda":3 \
+    --field="Add Event":BTN "AddEvents":4 \
+    --field="Add Occasion":BTN "AddOcasions":5 \
+    --field="Show details on calendar":BTN "ShowCalendar":6 \
+    --field="Delete a file":BTN "DeleteFiles":7 \
+    --field="Exit":BTN "gtk-close":8)
+    case $? in
+
+        1) DisplayDateAndTime ;;
+
+        2) AddNotes ;;
+
+        3) Agenda ;;
+
+        4) AddEvents ;;
+        
+        5) AddOcasions ;;
+            
+        6) ShowCalendar ;;
+        
+        7) DeleteFiles ;;
+        
+        8) exit 0 ;;
+
+        *) (yad --title "Error" --error --text "Invalid selection") ;;
+        
+    esac   
+done
+}
+
+ShowMenu
+
+

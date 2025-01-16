@@ -1,0 +1,151 @@
+#!/bin/bash
+#YAD-Yet Another Dialog 
+
+function DisplayDateAndTime(){
+    # Display the current date and time
+    current_date_time=$(date +"%A, %d %B %Y, %l %p")
+    day=$(date +"%j")
+
+    # Use yad to display a dialog box with the current date and time
+    (yad --title="Current Date &Time" --text="The current Date and Time is: \n $current_date_time.\n Day $day of the year." --button="OK:0" --width=300 --height=100 --left)
+}
+DisplayDateAndTime
+
+function AddNotes(){
+
+    # Display form to add note
+    form=$(yad --title="Add Note" --text="Please enter details:" --form --date-format="%-d %B %Y" --separator="," \
+    --field="Date":DT "$(date +%-d %B %Y)" --field="Note":TXT "" "")
+
+    # Extract fields from the form
+    date=$(echo "$form" | cut -d, -f1)
+    note=$(echo "$form" | cut -d, -f2)    
+    
+    # Set filename and check if it exists
+    filename="($date)NOTE.ics"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+ 
+    # Append note to the file
+    echo "Date: $date" >> "$filename"
+    echo "Note: $note" >> "$filename"
+    
+    # Show confirmation message
+    (yad --title="INFORMATION: Note Added" --text="Details saved to file: $filename" --button="OK:0" --width=300 --height=100)
+    
+    # Display file contents for editing
+    (yad --title="Edit Note File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+AddNotes
+
+function AddEvents(){
+	
+    event="Appointment,Doctor's Appointment,Meeting,Other Event"
+    #start="00:00,01:00,02:00,03:00,04:00,05:00,06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,15:00,16:00,17:00,18:00,19:00,20:00,21:00,22:00,23:00"
+    #finish="00:00,01:00,02:00,03:00,04:00,05:00,06:00,07:00,08:00,09:00,10:00,11:00,12:00,13:00,14:00,15:00,16:00,17:00,18:00,19:00,20:00,21:00,22:00,23:00"
+
+    form=$(yad --title="Add Meeting"--text="Please enter appointment details:" --form --date-format="%-d %B %Y" --separator="," --item-separator="," --field="Choose event":CBE\
+    --field="Date":DT --field="Start Time":DT "$(date +%Y%m%dT%H%M%S)" --field="End Time":DT "$(date +%Y%m%dT%H%M%S)" --field="Additonal Notes:":TXT "$event" "" "$start" "$finish" "")
+	
+	
+    # Extract fields from the form
+    meeting=$(echo "$form" | cut -d, -f1)
+    date=$(echo "$form" | cut -d, -f2)
+    start_time=$(echo "$form" | cut -d, -f3)
+    end_time=$(echo "$form" | cut -d, -f4)
+    note=$(echo "$form" | cut -d, -f5)
+    	
+    # Create file
+    filename="($date)$event.ics"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+    
+    # Save appointment details to the file
+    echo "Event:"$meeting >>"$filename"
+    echo "Date: $date" >>"$filename"
+    echo "$meeting starts at: $start_time" >>"$filename"
+    echo "$meeting end at: $end_time">>"$filename"
+    echo "Note: $note" >>"$filename"
+    	
+    # Show confirmation message
+    (yad --title="INFORMATION: Event Added" --text="Details saved to file: $filename " --button="OK:0" --width=300 --height=500)
+    
+    # Display file contents for editing
+    (yad --title="Edit Event File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+AddEvents
+
+function Agenda(){ ####################### MUST ADD ARRAY, cannot SEPARATE FILE 
+    date=$(yad --calendar --date-format="%d-%m-%Y" --title="Calendar" --text="Select date" --borders=10)
+	
+    # Create file
+    filename="To_do_list.txt"
+    touch $filename
+    	
+    #Display a dialog box to get the user's input
+    task=$(yad --title="Add task to complete on today's agenda" --text="Enter the tasks you want to do:" --entry)
+    echo "$task" >> "$filename"
+	
+    # Display the shopping list using yad checklist
+    readfile=$(cat "To_do_list.txt")
+    (yad --title="To Do List" --height=300 --list --checklist --column=Do/Done --column=Tasks < "$filename")
+}
+Agenda
+
+function AddOccasions(){
+    occasion="Anniverssary,Birthday,Engagement,Marriage,Public Holiday,Vacation, Religious Ceremony,Other Occasion"
+
+    form=$(yad --title="Add Occasion"--text="Please enter occasion details:" --form --date-format="%-d %B %Y" --separator="," --item-separator="," --field="Date":DT  \
+    --field="Choose occasion":CBE --field="Name":TXT --field="Additonal Notes:":TXT "" "$occasion" "" "")
+	
+	
+    # Extract fields from the form
+    date=$(echo "$form" | cut -d, -f1)
+    event=$(echo "$form" | cut -d, -f2)
+    name=$(echo "$form" | cut -d, -f3)
+    note=$(echo "$form" | cut -d, -f4)
+    	
+    # Create file
+    filename="($date)$occasion.ics"
+    if [ ! -f "$filename" ]; then
+        touch "$filename"
+    fi
+    
+    # Save appointment details to the file
+    echo "Date:"$date >>"$filename"
+    echo "Occasion: $event" >>"$filename"
+    echo "$event: $name" >>"$filename"
+    echo "Note: $note" >>"$filename"
+    	
+    # Show confirmation message
+    (yad --title="INFORMATION: Occasion Added" --text="Details saved to file: $filename " --button="OK:0" --width=300 --height=500)
+    
+    # Display file contents for editing
+    (yad --title="Edit Occasion File" --text-info --filename="$filename" --editable --width=800 --height=600)
+}
+AddOccasions
+
+# Function to open the calendar
+function OpenCalendar(){
+    # Find all the ics files and concatenate them into a single file
+    createfile="calender.ics"
+    touch $createfile
+    cat *.ics >> "$createfile"
+
+    # Open the calendar file in the default calendar application
+    xdg-open calendar.ics
+}
+
+# Display the main menu
+while true; do
+    choice=$(yad --title="Calendar" --text="Select an option:" --button="Add Note":1 --button="Add Event":2 --button="View Calendar":3 --button="Quit":4 --width=300 --height=100)
+
+    case "$choice" in
+        1) AddNotes ;;
+        2) AddEvents ;;
+        3) OpenCalendar ;;
+        4) exit ;;
+    esac
+done

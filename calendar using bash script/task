@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function Agenda(){
+
+    date=$(yad --calendar --date-format="%-d %B %Y" --title="Calendar" --text="Select date" --borders=10)
+
+    # Create file
+    filename="($date)To_do_list.txt"
+    touch $filename
+
+    #Display a dialog box to get the user's input
+    task=$(yad --title="Add task to complete on today's agenda" --text="Enter the tasks you want to do, separated by commas:" --entry)
+
+    #Split the input into an array of tasks
+    IFS=',' read -ra tasks <<< "$task"
+
+    #Write each task to the file
+    for t in "${tasks[@]}"
+    do
+        echo "$t" >> "$filename"
+    done
+
+    # Display the to-do list using yad checklist
+    checklist=()
+    while read line; do
+        checklist+=(FALSE "$line")
+    done < "$filename"
+
+    (yad --title="To Do List" --height=300 --list --checklist --column=Do/Done --column=Tasks "${checklist[@]}")
+}
+
+
+
+Agenda

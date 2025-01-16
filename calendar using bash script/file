@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Get current date
+today=$(date +%-d %B %Y)
+
+# Find all files with today's date in their name and group them together
+files=$(find . -type f -name "*($today)*")
+
+# Loop through each file and display its contents using yad
+for file in $files; do
+  yad --title="File: $file" --text-info --filename="$file" --editable --width=800 --height=600
+done
+
